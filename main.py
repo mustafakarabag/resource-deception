@@ -5,8 +5,7 @@ import numpy as np
 def mymain():
 
     print('Hello World!')
+    print('Hello World, from Yagiz!')
 
 if __name__ == '__main__':
     mymain()
-
-
