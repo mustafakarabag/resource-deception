@@ -1,6 +1,7 @@
 from markov_decision_processes.mdp import MDP
 from markov_decision_processes.averagemdp import AverageMDP
 from markov_decision_processes.totalcostmdp import TotalCostMDP
+from markov_decision_processes.timeproductmdp import TimeProductMDP
 import numpy as np
 
 def mymain():
@@ -20,6 +21,15 @@ def mymain():
     final_state_const = ([2,3], np.array([0.2, 0.8]))
     initial_state_dist = np.array([0.2, 0.8, 0, 0])
     TotalCostMDP.maximize_reward_with_concave_regularizer(my_mdp, reward_list, end_states, 'entropy', 0.1, initial_state_dist, final_state_const)
+
+    my_mdp2 = MDP([[np.array([[0,1]]),np.eye(2)],
+                  [np.array([[1,2,3]]),np.eye(3)],
+                    [np.array([[0,1,2,3]]),np.eye(4)],
+                    [np.array([[0,1,2]]),np.eye(3)]], 0)
+
+    time_product_MDP = TimeProductMDP(my_mdp2, 2, 'continue')
+    print(time_product_MDP.product_state_to_original_state(8))
+    print(time_product_MDP.NS)
 
 if __name__ == '__main__':
     mymain()

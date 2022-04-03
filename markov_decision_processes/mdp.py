@@ -9,19 +9,28 @@ class MDP(object):
 
     def __init__(self,
                  list_of_states_and_transitions: list,
-                 initial_state_index: int):
+                 initial_state_index: int,
+                 reward=None):
         """
 
         :param list_of_states_and_transitions: List that contains the transition probability matrix of every state
         list_of_states_and_transitions[i] is a 2 element tuple for state i.
-        list_of_states_and_transitions[i][1] is the 1d array of successor states of state i.
-        list_of_states_and_transitions[i][2] is the transition probability matrix of state i.
-        list_of_states_and_transitions[i][2][a,j] is the transition probability to j-th successor state when taking action a at state i
+        list_of_states_and_transitions[i][0] is the 1d array of successor states of state i.
+        list_of_states_and_transitions[i][1] is the transition probability matrix of state i.
+        list_of_states_and_transitions[i][1][a,j] is the transition probability to j-th successor state when taking action a at state i
         :param initial_state_index: The index of the initial state.
         """
-
+        valid_mdp = True
         self.list_of_states_and_transitions = list_of_states_and_transitions
         self.initial_state_index = initial_state_index
+
+        if reward is not None:
+            if self.is_reward_function_valid(reward):
+                self.reward = reward
+            else:
+                valid_mdp = False
+        else:
+            self.reward = None
 
         """
         Properties:
@@ -31,7 +40,7 @@ class MDP(object):
         NNext: (Maximum) number of successor states
         """
 
-        valid_mdp = True
+
         tol = 1e-10
 
         # Check whether MDP contains any states
