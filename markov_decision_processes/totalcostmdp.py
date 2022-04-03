@@ -4,9 +4,11 @@ from markov_decision_processes.mdp import MDP
 import cvxpy as cp
 
 
-class AverageMDP:
+class TotalCostMDP:
     """
-    Class for functions related to MDPs with infinite horizons and average statistics
+    Class for functions related to MDPs with infinite horizons and total statistics.
+
+    The states that are not in end states are assumed to be transient.
     """
 
     def compute_occupancy_measures(mdp: MDP, policy) -> np.ndarray:
@@ -24,7 +26,7 @@ class AverageMDP:
         assert mdp.is_policy_valid(policy)
 
         x_sa = cp.Variable((1, mdp.NSA))
-        occupancy_constraints = AverageMDP._create_flow_equations(mdp, x_sa)
+        occupancy_constraints, x_s_inflow = TotalCostMDP._create_flow_equations(mdp, x_sa)
 
         #Problem constraints
         constraints = []
@@ -51,9 +53,9 @@ class AverageMDP:
         #print("\nThe optimal value is", prob.value)
         #print("A solution x is")
         #print(x_sa.value)
-        return x_sa.value
+        return x_sa.value, x_s_inflow.value
 
-    def maximize_reward_with_concave_regularizer(mdp: MDP, reward: list, regularizer: str, reg_constant: float):
+    def maximize_reward_with_concave_regularizer(mdp: MDP, reward: list, end_states, regularizer: str, reg_constant: float, initial_state_dist, final_state_dist=None):
         """
         Computes the policy that collects maximum average reward subject to regularization.
         This implementation assumes that every strongly connected component is reachable with probability 1.
@@ -61,16 +63,19 @@ class AverageMDP:
 
         :param mdp: A discrete time, discrete state MDP.
         :param reward: A list of reward arrays for each state.
+        :param end_states: A list of end states.
         :param regularizer: The type of regularization. Potential values are 'entropy', 'none'
         :param reg_constant: Regularization constant that multiplies the regularization term.
+        :param initial_state_dist: A distribution over initial states.
+        :param final_state_dist: A tuple with a support over some states and respective probabilities.
         :return: The optimal objective value, the value for the linear reward w/o regularization, the occupancy measures
         """
         #TODO add KL and Fisher
 
-        #Check the validity of the list of rewards
-        assert mdp.is_reward_function_valid(reward)
+        ##Check the validity of the list of rewards
+        #assert mdp.is_reward_function_valid(reward)
 
-        reward_vec = AverageMDP.state_list_to_stateaction_vec(mdp, reward)
+        reward_vec = TotalCostMDP.state_list_to_stateaction_vec(mdp, reward)
 
         #Tolerance
         tol = 1e-7
@@ -79,15 +84,22 @@ class AverageMDP:
         x_sa = cp.Variable((1, mdp.NSA))
 
         #Occupancy constraints that an average MDP obeys
-        occupancy_constraints = AverageMDP._create_flow_equations_zero_unreachable(mdp, x_sa)
+        occupancy_constraints, x_s_inflow = TotalCostMDP._create_flow_equations_zero_unreachable(mdp, x_sa, end_states, initial_state_dist)
 
         #Problem constraints
         constraints = []
         constraints.extend(occupancy_constraints)
 
+        final_state_constraints = []
+        #Final state constraints
+        if final_state_dist is not None:
+            (target_states, target_probabilities) = final_state_dist
+            for i in range(len(target_states)):
+                final_state_constraints.append(x_s_inflow[target_states[i]] == target_probabilities[i])
+        constraints.extend(final_state_constraints)
 
         linear_reward_func = x_sa @ reward_vec
-        reg_func = 0
+        reg_func = 0.0
         if(regularizer == 'entropy'):
             sa_ind = 0
             for state_index in range(mdp.NS):
@@ -103,6 +115,7 @@ class AverageMDP:
         func = linear_reward_func + reg_func
         obj = cp.Maximize(func)
 
+
         # Create the problem
         prob = cp.Problem(obj, constraints)
 
@@ -115,12 +128,14 @@ class AverageMDP:
 
 
 
-    def _create_flow_equations(mdp: MDP, x_sa):
+    def _create_flow_equations(mdp: MDP, x_sa, end_states, initial_state_dist):
         """
         Creates the flow equations that are required for policy comnputations.
 
         :param mdp: A discrete time, discrete state MDP.
         :param x_sa: A vector of cvxpy variables for occupancy variables.
+        :param end_states: A list of absorbing states.
+        :param initial_state_dist: A numpy array of the initial state distribution
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
         x_s_inflow = [None] * mdp.NS
@@ -128,19 +143,23 @@ class AverageMDP:
 
         sa_ind = 0
         for state_index in range(mdp.NS):
-            #Outflow is the total occupancy measure of the actions
-            x_s_outflow[state_index] = cp.sum(x_sa[:, sa_ind:(sa_ind + mdp.NA_list[0, state_index])])
-            (succ_state_list, tran_mat) = mdp.list_of_states_and_transitions[state_index]
-            num_of_actions = mdp.NA_list[0, state_index]
-            outflows = x_sa[:, sa_ind:(sa_ind + num_of_actions)] @ tran_mat
-            for succ_state_index in range(succ_state_list.size):
-                succ_state = succ_state_list[0,succ_state_index]
-                #Distribute outflow to the successor states
-                if x_s_inflow[succ_state] is None:
-                    x_s_inflow[succ_state] = outflows[0, succ_state_index]
-                else:
-                    x_s_inflow[succ_state] = cp.atoms.affine.add_expr.AddExpression([x_s_inflow[succ_state], outflows[0, succ_state_index]])
-            sa_ind += mdp.NA_list[0, state_index]
+            if state_index not in end_states:
+                #Outflow is the total occupancy measure of the actions
+                x_s_outflow[state_index] = cp.sum(x_sa[:, sa_ind:(sa_ind + mdp.NA_list[0, state_index])])
+                (succ_state_list, tran_mat) = mdp.list_of_states_and_transitions[state_index]
+                num_of_actions = mdp.NA_list[0, state_index]
+                outflows = x_sa[:, sa_ind:(sa_ind + num_of_actions)] @ tran_mat
+                for succ_state_index in range(succ_state_list.size):
+                    succ_state = succ_state_list[0,succ_state_index]
+                    #Distribute outflow to the successor states
+                    if x_s_inflow[succ_state] is None:
+                        x_s_inflow[succ_state] = outflows[0, succ_state_index]
+                    else:
+                        x_s_inflow[succ_state] = cp.atoms.affine.add_expr.AddExpression([x_s_inflow[succ_state], outflows[0, succ_state_index]])
+                sa_ind += mdp.NA_list[0, state_index]
+
+                #Add initial flows
+                x_s_inflow[state_index] = x_s_inflow[state_index] + initial_state_dist[state_index]
 
         # Define the occupancy measure constraints
         occupancy_constraints = []
@@ -148,25 +167,24 @@ class AverageMDP:
         # All occupancy measures are positive
         occupancy_constraints.append(x_sa >= 0.0)
 
-        #Total occupancy measures must be 1
-        occupancy_constraints.append(cp.sum(x_sa) == 1)
-
         # Incoming flow is equal to the outgoing flow
         for state_index in range(mdp.NS):
-            occupancy_constraints.append(x_s_inflow[state_index] == x_s_outflow[state_index])
+            if state_index not in end_states:
+                occupancy_constraints.append(x_s_inflow[state_index] == x_s_outflow[state_index])
 
-        return occupancy_constraints
+        return occupancy_constraints, x_s_inflow
 
-    def _create_flow_equations_zero_unreachable(mdp: MDP, x_sa):
+    def _create_flow_equations_zero_unreachable(mdp: MDP, x_sa, end_states, initial_state_dist):
         """
         Creates the flow equations that are required for policy comnputations. Sets zero occupancy for
         the states that are unreachable.
 
         :param mdp: A discrete time, discrete state MDP.
         :param x_sa: A vector of cvxpy variables for occupancy variables.
+        :param end_states: A list of end states.
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
-        occupancy_constraints = AverageMDP._create_flow_equations(mdp, x_sa)
+        occupancy_constraints = TotalCostMDP._create_flow_equations(mdp, x_sa, end_states, initial_state_dist)
         reachable_states = mdp.find_reachable_states()
         sa_ind = 0
         for state_index in range(mdp.NS):
