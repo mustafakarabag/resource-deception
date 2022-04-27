@@ -10,6 +10,15 @@ class TimeProductMDP(MDP):
                  original_mdp: MDP,
                  T: int,
                  end_type: str):
+        """
+        Creates a product MDP using a given MDP and a time horizon.
+
+        @param original_mdp: MDP that the product is build upon
+        @param T: Time horizon. The agent has T active decisions. Must be greater than 0
+        @param end_type: What happens when the time horizon ends.
+                        'cut' cuts the time horizon and connects the states to themselves at the end.
+                        'continue' connects the states to their original successor states.
+        """
 
         if T < 1: raise ValueError('Time horizon must be positive.')
 
@@ -17,10 +26,17 @@ class TimeProductMDP(MDP):
         list_of_states_and_transitions = []
         initial_state_index = original_mdp.initial_state_index
         self.T = T
+
+        if original_mdp.reward is not None:
+            self.reward = original_mdp.reward*(T+1)
+        else:
+            self.reward = None
+
         for t in range(T):
             for s in range(original_mdp.NS):
                 succ_states = original_mdp.list_of_states_and_transitions[s][0] + original_mdp.NS*(t+1)
                 list_of_states_and_transitions.append([succ_states, original_mdp.list_of_states_and_transitions[s][1]])
+
 
         if end_type == 'cut':
             for s in range(original_mdp.NS):
@@ -28,6 +44,7 @@ class TimeProductMDP(MDP):
                 succ_states = np.array([[original_mdp.NS*T + s]])
                 list_of_states_and_transitions.append([succ_states, np.array([[1.0]])])
             self.end_type = end_type
+
         elif end_type == 'continue':
             for s in range(original_mdp.NS):
                 #Connect states to their actual successors at the end
@@ -41,6 +58,11 @@ class TimeProductMDP(MDP):
         super().__init__(list_of_states_and_transitions, initial_state_index)
 
     def product_state_to_original_state(self, product_index: int):
+        """
+
+        @param product_index:
+        @return:
+        """
         if (product_index > 0) and (product_index < self.NS):
             time_index = product_index//self.original_mdp.NS
             state_index = product_index % self.original_mdp.NS
