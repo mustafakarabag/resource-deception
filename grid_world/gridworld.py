@@ -5,8 +5,10 @@ class GridWorld(MDP):
     def __init__(self,
                  num_of_rows: int,
                  num_of_cols: int,
+                 init_state_index: int,
                  obstacle_locations: list,
-                 slip_probability=0):
+                 slip_probability=0,
+                 reward_constant = 0):
         """
 
         @param num_of_rows: Number of rows of the grid
@@ -16,6 +18,7 @@ class GridWorld(MDP):
         """
         self.Nrows = num_of_rows
         self.Ncols = num_of_cols
+        self.init_state_index = init_state_index
         self.obstacle_locations = obstacle_locations
         self.slip_probability = slip_probability
         self.NS = self.Nrows*self.Ncols
@@ -82,6 +85,9 @@ class GridWorld(MDP):
             succ_states = np.ravel_multi_index(np.transpose(np.array(successor_locs)), (self.Nrows, self.Ncols))
             self.list_of_states_and_transitions.append([np.array([succ_states]), tran_probs])
 
+        # Initialize as an MDP to make sure the construction is correct
+        super().__init__(self.list_of_states_and_transitions, self.init_state_index, self.construct_uniform_rewards(reward_constant))
+
 
 
 
@@ -139,3 +145,13 @@ class GridWorld(MDP):
                 return ind
 
         return -1
+
+    def construct_uniform_rewards(self, c : float):
+        """
+        Returns an list of uniform rewards for the grid world
+        """
+        rewards = []
+        for state_index in range(len(self.list_of_states_and_transitions)):
+            (successors, transitions) = self.list_of_states_and_transitions[state_index]
+            rewards.append(c * np.ones((1,np.size(transitions,0))))
+        return rewards

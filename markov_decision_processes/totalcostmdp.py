@@ -55,7 +55,7 @@ class TotalCostMDP:
         #print(x_sa.value)
         return x_sa.value, x_s_inflow.value
 
-    def maximize_reward_with_concave_regularizer(mdp: MDP, reward: list, end_states, regularizer: str, reg_constant: float, initial_state_dist, final_state_dist=None):
+    def maximize_reward_with_concave_regularizer(mdp: MDP, end_states, regularizer: str, reg_constant: float, initial_state_dist, final_state_dist=None):
         """
         Computes the policy that collects maximum average reward subject to regularization.
         This implementation assumes that every strongly connected component is reachable with probability 1.
@@ -74,6 +74,7 @@ class TotalCostMDP:
 
         ##Check the validity of the list of rewards
         #assert mdp.is_reward_function_valid(reward)
+        reward = mdp.reward
 
         reward_vec = TotalCostMDP.state_list_to_stateaction_vec(mdp, reward)
 
@@ -207,5 +208,3 @@ class TotalCostMDP:
             var_vec[sa_ind:(sa_ind + mdp.NA_list[0, state_index]), 0] = var_list[state_index]
             sa_ind += mdp.NA_list[0, state_index]
         return var_vec
-
-
