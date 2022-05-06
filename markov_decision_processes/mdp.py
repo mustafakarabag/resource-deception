@@ -84,7 +84,8 @@ class MDP(object):
             if self.is_reward_function_valid(reward):
                 self.reward = reward
             else:
-                valid_mdp = False
+                pass
+                #valid_mdp = False
         else:
             self.reward = None
 
@@ -152,8 +153,9 @@ class MDP(object):
             if self.NA_list[0, state_index] != reward[state_index].size:
                 valid_reward = False
             elif (reward[state_index] < 0).any():
-                print('Rewards/Costs are not valid for state ', state_index)
-                valid_reward = False
+                #print('Rewards/Costs are not valid for state ', state_index)
+                #valid_reward = False
+                pass
 
         return valid_reward
 
@@ -193,9 +195,11 @@ class MDP(object):
             initial_state = self.s0
 
         reachable_set = set()
+        reachable_set.update([self.s0])
         states_to_be_checked = {self.s0}
         while len(states_to_be_checked) > 0:
             state = states_to_be_checked.pop()
-            states_to_be_checked = set(self.list_of_states_and_transitions[state][0].flatten()) - reachable_set
-            reachable_set.update(states_to_be_checked)
+            new_states_to_be_checked = set(self.list_of_states_and_transitions[state][0].flatten()) - reachable_set
+            states_to_be_checked.update(new_states_to_be_checked)
+            reachable_set.update(new_states_to_be_checked)
         return reachable_set
