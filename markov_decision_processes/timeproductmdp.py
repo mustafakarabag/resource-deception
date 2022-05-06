@@ -55,7 +55,7 @@ class TimeProductMDP(MDP):
             raise ValueError('End type is not recognized.')
 
         # Initializes the resulting joint MDP if there are no pairs of MDPs to be merged
-        super().__init__(list_of_states_and_transitions, initial_state_index)
+        super().__init__(list_of_states_and_transitions, initial_state_index, self.reward)
 
     def product_state_to_original_state(self, product_index: int):
         """

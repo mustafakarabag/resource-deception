@@ -24,14 +24,6 @@ class MDP(object):
         self.list_of_states_and_transitions = list_of_states_and_transitions
         self.initial_state_index = initial_state_index
 
-        if reward is not None:
-            if self.is_reward_function_valid(reward):
-                self.reward = reward
-            else:
-                valid_mdp = False
-        else:
-            self.reward = None
-
         """
         Properties:
         NS: Number of states
@@ -86,6 +78,15 @@ class MDP(object):
                     else:
                         print('Transition probability matrix is not in the desired format for state ', state_index)
                         valid_mdp = False
+
+        # Check if reward function is valid
+        if reward is not None:
+            if self.is_reward_function_valid(reward):
+                self.reward = reward
+            else:
+                valid_mdp = False
+        else:
+            self.reward = None
 
         assert valid_mdp
 

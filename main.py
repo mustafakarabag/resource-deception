@@ -1,8 +1,8 @@
 from markov_decision_processes.mdp import MDP
 #from markov_decision_processes.averagemdp import AverageMDP
-#from markov_decision_processes.totalcostmdp import TotalCostMDP
+from markov_decision_processes.totalcostmdp import TotalCostMDP
 from markov_decision_processes.timeproductmdp import TimeProductMDP
-from grid_world_environments.grid_world import GridWorld
+from grid_world.gridworld import GridWorld
 import numpy as np
 
 def mymain():
@@ -39,12 +39,20 @@ def mymain():
     obstacles = []
     slip_probability = 0.1
     init_state = 0
-    my_grid_world = GridWorld(num_of_rows, num_of_cols, obstacles, slip_probability)
-    grid_transitions = my_grid_world.construct_transitions()
-    my_mdp3 = MDP(grid_transitions, init_state)
-    time_product_MDP = TimeProductMDP(my_mdp3, 2, 'continue')
-    print(time_product_MDP.product_state_to_original_state(38))
-    print(time_product_MDP.NS)
+    reward_constant = 10
+    end_states = [24]
+    final_distribution = [[24], [1]]
+    regularization_constant = 1
+    my_grid_world = GridWorld(num_of_rows, num_of_cols, init_state, obstacles, slip_probability, reward_constant)
+
+    time_product_grid_world = TimeProductMDP(my_grid_world, 2, 'continue')
+
+    initial_state_dist = np.zeros(len(time_product_grid_world.list_of_states_and_transitions))
+    initial_state_dist[init_state] = 1
+    TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'entropy',
+                                                          regularization_constant, initial_state_dist, final_distribution)
+
+
 
 
 
