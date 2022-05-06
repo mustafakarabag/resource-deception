@@ -80,7 +80,7 @@ class GridWorld(MDP):
 
             #Find the state indices of the successor state locations
             succ_states = np.ravel_multi_index(np.transpose(np.array(successor_locs)), (self.Nrows, self.Ncols))
-            self.list_of_states_and_transitions.append([succ_states, tran_probs])
+            self.list_of_states_and_transitions.append([np.array([succ_states]), tran_probs])
 
 
 
@@ -137,5 +137,5 @@ class GridWorld(MDP):
         for ind in range(len(list_of_arrays)):
             if (arr == list_of_arrays[ind]).all():
                 return ind
-            
+
         return -1
