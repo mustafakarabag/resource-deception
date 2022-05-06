@@ -97,7 +97,7 @@ class TotalCostMDP:
             (target_states, target_probabilities) = final_state_dist
             for i in range(len(target_states)):
                 final_state_constraints.append(x_s_inflow[target_states[i]] == target_probabilities[i])
-        constraints.extend(final_state_constraints)
+            constraints.extend(final_state_constraints)
 
         linear_reward_func = x_sa @ reward_vec
         reg_func = 0.0
@@ -139,8 +139,8 @@ class TotalCostMDP:
         :param initial_state_dist: A numpy array of the initial state distribution
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
-        x_s_inflow = [None] * mdp.NS
-        x_s_outflow = [None] * mdp.NS
+        x_s_inflow = [cp.Constant(0.0)] * mdp.NS
+        x_s_outflow = [cp.Constant(0.0)] * mdp.NS
 
         sa_ind = 0
         for state_index in range(mdp.NS):
@@ -185,14 +185,14 @@ class TotalCostMDP:
         :param end_states: A list of end states.
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
-        occupancy_constraints = TotalCostMDP._create_flow_equations(mdp, x_sa, end_states, initial_state_dist)
+        (occupancy_constraints, x_s_inflow) = TotalCostMDP._create_flow_equations(mdp, x_sa, end_states, initial_state_dist)
         reachable_states = mdp.find_reachable_states()
         sa_ind = 0
         for state_index in range(mdp.NS):
             if state_index not in reachable_states:
                 occupancy_constraints.append(x_sa[:, sa_ind:(sa_ind + mdp.NA_list[0, state_index])] == 0)
             sa_ind += mdp.NA_list[0, state_index]
-        return occupancy_constraints
+        return occupancy_constraints, x_s_inflow
 
     def state_list_to_stateaction_vec(mdp: MDP, var_list: list):
         """
