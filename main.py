@@ -1,3 +1,5 @@
+import os
+
 from markov_decision_processes.mdp import MDP
 #from markov_decision_processes.averagemdp import AverageMDP
 from markov_decision_processes.totalcostmdp import TotalCostMDP
@@ -5,6 +7,8 @@ from markov_decision_processes.timeproductmdp import TimeProductMDP
 from grid_world.gridworld import GridWorld
 from zero_sum_game.zero_sum import ZeroSumGame
 import numpy as np
+
+import pickle
 
 def mymain():
 
@@ -35,39 +39,33 @@ def mymain():
     # print(time_product_MDP.NS)
 
 
-    num_of_rows = 5
+    num_of_rows = 6
     num_of_cols = 5
     num_of_states = num_of_rows*num_of_cols
     obstacles = []
-    slip_probability = 0.001
+    slip_probability = 0.2
     init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[3] = 0.5; init_state_dist[1] = 0.5
     reward_constant = -10
-    end_states = [74]
-    final_distribution = [[74], [1]]
+    end_states = [239]
+    final_distribution = [[239], [1]]
     regularization_constant = 5
     my_grid_world = GridWorld(num_of_rows, num_of_cols, init_state_dist, obstacles, slip_probability, reward_constant)
 
-    time_product_grid_world = TimeProductMDP(my_grid_world, 2, 'continue')
+    time_product_grid_world = TimeProductMDP(my_grid_world, 7, 'continue')
 
-    initial_state_dist = np.zeros(len(time_product_grid_world.list_of_states_and_transitions))
-    initial_state_dist[22] = 1
-
-    regularized_value, nominal_value, occupancies = TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'entropy',
-                                                          regularization_constant, initial_state_dist, final_distribution)
-
-    occupancies[occupancies < 1e-5] = 0
-    print(occupancies)
+    #initial_state_dist = np.zeros(len(time_product_grid_world.list_of_states_and_transitions))
+    #initial_state_dist[22] = 1
+    val, _,  x_sa = TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'entropy',
+                                                          regularization_constant, time_product_grid_world.initial_state_dist)
 
 
-
-    ### Zero sum game trial
-    utility_matrix = np.random.rand(4,4)
-    print(utility_matrix)
-    game_value, security_level, strategy = ZeroSumGame.compute_equilibrium(utility_matrix)
-    print(strategy)
-
-
-
+    # Save the constructed gridworld
+    save_file_str = os.path.join(os.path.abspath(os.path.curdir), 'logs', 'time_product_mdp_results', '3stepcontinueMDP.pkl')
+    with open(save_file_str, 'wb') as f:
+        save_dict = {}
+        save_dict['time_product_mdp'] = time_product_grid_world
+        save_dict['x_sa'] = x_sa
+        pickle.dump(save_dict, f)
 
 
 
