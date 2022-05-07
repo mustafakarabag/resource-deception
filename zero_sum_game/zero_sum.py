@@ -18,11 +18,11 @@ class ZeroSumGame:
 
         # Variables
         strategy_distribution = cp.Variable((1, support_size_for_strategy))
-        security_level = cp.Variable(1)
+        security_level = cp.Variable((1,1))
 
         # Constraints
         constraints = []
-        constraints.append(strategy_distribution@utility_matrix - security_level * np.ones((1, support_size_for_strategy)) >= 0)
+        constraints.append(strategy_distribution @ utility_matrix - security_level @ np.ones((1, support_size_for_strategy)) >= 0)
         constraints.append(cp.sum(strategy_distribution) == 1)
         constraints.append(strategy_distribution >= 0)
 
