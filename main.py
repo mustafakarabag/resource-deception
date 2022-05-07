@@ -5,6 +5,7 @@ from markov_decision_processes.mdp import MDP
 from markov_decision_processes.totalcostmdp import TotalCostMDP
 from markov_decision_processes.timeproductmdp import TimeProductMDP
 from grid_world.gridworld import GridWorld
+from zero_sum_game.zero_sum import ZeroSumGame
 import numpy as np
 
 import pickle
