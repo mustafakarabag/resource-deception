@@ -36,21 +36,22 @@ def mymain():
 
     num_of_rows = 5
     num_of_cols = 5
+    num_of_states = num_of_rows*num_of_cols
     obstacles = []
-    slip_probability = 0.001
-    init_state = 0
+    slip_probability = 0.7
+    init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[0] = 1.0
     reward_constant = -10
     end_states = [74]
-    final_distribution = [[24], [1]]
+    final_distribution = [[74], [1]]
     regularization_constant = 5
-    my_grid_world = GridWorld(num_of_rows, num_of_cols, init_state, obstacles, slip_probability, reward_constant)
+    my_grid_world = GridWorld(num_of_rows, num_of_cols, init_state_dist, obstacles, slip_probability, reward_constant)
 
     time_product_grid_world = TimeProductMDP(my_grid_world, 2, 'continue')
 
     initial_state_dist = np.zeros(len(time_product_grid_world.list_of_states_and_transitions))
-    initial_state_dist[init_state] = 1
-    TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'entropy',
-                                                          regularization_constant, initial_state_dist)
+    initial_state_dist[0] = 1
+    TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'none',
+                                                          regularization_constant, initial_state_dist,final_distribution)
 
 
 

@@ -9,7 +9,7 @@ class MDP(object):
 
     def __init__(self,
                  list_of_states_and_transitions: list,
-                 initial_state_index: int,
+                 initial_state_dist: np.ndarray,
                  reward=None):
         """
 
@@ -18,12 +18,11 @@ class MDP(object):
         list_of_states_and_transitions[i][0] is the 1d array of successor states of state i.
         list_of_states_and_transitions[i][1] is the transition probability matrix of state i.
         list_of_states_and_transitions[i][1][a,j] is the transition probability to j-th successor state when taking action a at state i
-        :param initial_state_index: The index of the initial state.
+        :param initial_state_dist: A 1d array of initial state distribution.
         """
         valid_mdp = True
         self.list_of_states_and_transitions = list_of_states_and_transitions
-        self.initial_state_index = initial_state_index
-
+        self.initial_state_dist = initial_state_dist
         """
         Properties:
         NS: Number of states
@@ -33,7 +32,7 @@ class MDP(object):
         """
 
 
-        tol = 1e-10
+        tol = 1e-6
 
         # Check whether MDP contains any states
         self.NS = len(self.list_of_states_and_transitions)
@@ -42,9 +41,8 @@ class MDP(object):
             valid_mdp = False
 
         # Check whether the initial state is valid
-        self.s0 =  self.initial_state_index
-        if (self.s0 < 0) or (self.s0 >= self.NS):
-            print("Initial state is out of boundary")
+        if any(self.initial_state_dist < 0) or (abs(np.sum(self.initial_state_dist) - 1) > tol):
+            print("Initial distribution is not valid.")
             valid_mdp = False
 
         self.NA = int(1)
@@ -100,7 +98,7 @@ class MDP(object):
         num_of_available_actions[0,s] gives the number available actions at state s
         initial_state is the index of initial_state
         """
-        initial_state = self.s0
+        initial_state_dist = self.initial_state_dist
         tran_mat_mdp = np.zeros((self.NS,self.NA,self.NS))
         num_of_available_actions = np.zeros((1,self.NS),int)
         for state_index in range(self.NS):
@@ -109,7 +107,7 @@ class MDP(object):
             for action_index in range(num_of_available_actions[0,state_index]):
                 for succ_state_index in range(tran_mat_state.shape[1]):
                     tran_mat_mdp[state_index, action_index, succ_state_list[0,succ_state_index]] = tran_mat_state[action_index, succ_state_index]
-        return (tran_mat_mdp, num_of_available_actions, initial_state)
+        return (tran_mat_mdp, num_of_available_actions, initial_state_dist)
 
 
     def is_policy_valid(self, policy):
@@ -192,11 +190,12 @@ class MDP(object):
 
     def find_reachable_states(self, initial_state=None):
         if initial_state is None:
-            initial_state = self.s0
+            initial_states =  np.nonzero(self.initial_state_dist)[0]
 
         reachable_set = set()
-        reachable_set.update([self.s0])
-        states_to_be_checked = {self.s0}
+        reachable_set.update(initial_states)
+        states_to_be_checked = set()
+        states_to_be_checked.update(initial_states)
         while len(states_to_be_checked) > 0:
             state = states_to_be_checked.pop()
             new_states_to_be_checked = set(self.list_of_states_and_transitions[state][0].flatten()) - reachable_set

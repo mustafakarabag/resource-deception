@@ -24,7 +24,6 @@ class TimeProductMDP(MDP):
 
         self.original_mdp = original_mdp
         list_of_states_and_transitions = []
-        initial_state_index = original_mdp.initial_state_index
         self.T = T
 
         if original_mdp.reward is not None:
@@ -54,8 +53,13 @@ class TimeProductMDP(MDP):
         else:
             raise ValueError('End type is not recognized.')
 
+
+        initial_state_dist = np.zeros(len(list_of_states_and_transitions))
+        initial_state_dist[0:original_mdp.NS] = original_mdp.initial_state_dist
+
+
         # Initializes the resulting joint MDP if there are no pairs of MDPs to be merged
-        super().__init__(list_of_states_and_transitions, initial_state_index, self.reward)
+        super().__init__(list_of_states_and_transitions, initial_state_dist, self.reward)
 
     def product_state_to_original_state(self, product_index: int):
         """
