@@ -68,6 +68,11 @@ def mymain():
         pickle.dump(save_dict, f)
 
 
+    utility_matrix = np.random.rand(4,4)
+    value, security_level, strategy = ZeroSumGame.compute_equilibrium(utility_matrix)
+    print(strategy)
+
+
 
 if __name__ == '__main__':
     mymain()
