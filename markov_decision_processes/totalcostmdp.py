@@ -199,7 +199,7 @@ class TotalCostMDP:
 
 
         (occupancy_constraints, x_s_inflow) = TotalCostMDP._create_flow_equations(mdp, x_sa, end_states, initial_state_dist)
-        reachable_states = mdp.find_reachable_states()
+        reachable_states = mdp.find_reachable_states(initial_state_dist)
         sa_ind = 0
         for state_index in range(mdp.NS):
             if state_index not in reachable_states:

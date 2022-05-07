@@ -188,9 +188,10 @@ class MDP(object):
     def remove_unreachable_states(self):
         return 0
 
-    def find_reachable_states(self, initial_state=None):
-        if initial_state is None:
-            initial_states =  np.nonzero(self.initial_state_dist)[0]
+    def find_reachable_states(self, initial_state_dist=None):
+        if initial_state_dist is None:
+            initial_state_dist = self.initial_state_dist
+        initial_states =  np.nonzero(initial_state_dist)[0]
 
         reachable_set = set()
         reachable_set.update(initial_states)
