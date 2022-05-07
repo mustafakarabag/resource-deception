@@ -3,6 +3,7 @@ from markov_decision_processes.mdp import MDP
 from markov_decision_processes.totalcostmdp import TotalCostMDP
 from markov_decision_processes.timeproductmdp import TimeProductMDP
 from grid_world.gridworld import GridWorld
+from zero_sum_game.zero_sum import ZeroSumGame
 import numpy as np
 
 def mymain():
@@ -58,6 +59,13 @@ def mymain():
 
     occupancies[occupancies < 1e-5] = 0
     print(occupancies)
+
+
+
+    ### Zero sum game trial
+    utility_matrix = np.ones((2,2))
+    game_value, security_level, strategy = ZeroSumGame.compute_equilibrium(utility_matrix)
+    print(strategy)
 
 
 
