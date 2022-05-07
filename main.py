@@ -36,7 +36,9 @@ def mymain():
 
     num_of_rows = 5
     num_of_cols = 5
+    num_of_states = num_of_rows*num_of_cols
     obstacles = []
+
     slip_probability = 0
     init_state = 4
     reward_constant = -10
@@ -45,15 +47,18 @@ def mymain():
     regularization_constant = 0
     my_grid_world = GridWorld(num_of_rows, num_of_cols, init_state, obstacles, slip_probability, reward_constant)
 
+
     time_product_grid_world = TimeProductMDP(my_grid_world, 1, 'continue')
 
     initial_state_dist = np.zeros(len(time_product_grid_world.list_of_states_and_transitions))
+
     initial_state_dist[init_state] = 1
     regularized_value, nominal_value, occupancies = TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, end_states, 'entropy',
                                                           regularization_constant, initial_state_dist, final_distribution)
 
     occupancies[occupancies < 1e-5] = 0
     print(occupancies)
+
 
 
 

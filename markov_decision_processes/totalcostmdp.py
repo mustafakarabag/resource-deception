@@ -55,7 +55,7 @@ class TotalCostMDP:
         #print(x_sa.value)
         return x_sa.value, x_s_inflow.value
 
-    def maximize_reward_with_concave_regularizer(mdp: MDP, end_states, regularizer: str, reg_constant: float, initial_state_dist, final_state_dist=None):
+    def maximize_reward_with_concave_regularizer(mdp: MDP, end_states, regularizer: str, reg_constant: float, initial_state_dist=None, final_state_dist=None):
         """
         Computes the policy that collects maximum average reward subject to regularization.
         This implementation assumes that every strongly connected component is reachable with probability 1.
@@ -77,6 +77,9 @@ class TotalCostMDP:
         reward = mdp.reward
 
         reward_vec = TotalCostMDP.state_list_to_stateaction_vec(mdp, reward)
+
+        if initial_state_dist is None:
+            initial_state_dist = mdp.initial_state_dist
 
         #Tolerance
         tol = 1e-7
@@ -129,7 +132,7 @@ class TotalCostMDP:
 
 
 
-    def _create_flow_equations(mdp: MDP, x_sa, end_states, initial_state_dist):
+    def _create_flow_equations(mdp: MDP, x_sa, end_states, initial_state_dist=None):
         """
         Creates the flow equations that are required for policy comnputations.
 
@@ -139,6 +142,11 @@ class TotalCostMDP:
         :param initial_state_dist: A numpy array of the initial state distribution
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
+
+        if initial_state_dist is None:
+            initial_state_dist = mdp.initial_state_dist
+
+
         x_s_inflow = [cp.Constant(0.0)] * mdp.NS
         x_s_outflow = [cp.Constant(0.0)] * mdp.NS
 
@@ -185,6 +193,11 @@ class TotalCostMDP:
         :param end_states: A list of end states.
         :return: A list of affine constraints that ensure the validity of the policy to be computed.
         """
+
+        if initial_state_dist is None:
+            initial_state_dist = mdp.initial_state_dist
+
+
         (occupancy_constraints, x_s_inflow) = TotalCostMDP._create_flow_equations(mdp, x_sa, end_states, initial_state_dist)
         reachable_states = mdp.find_reachable_states()
         sa_ind = 0
