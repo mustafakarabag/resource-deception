@@ -36,7 +36,6 @@ class TimeProductMDP(MDP):
                 succ_states = original_mdp.list_of_states_and_transitions[s][0] + original_mdp.NS*(t+1)
                 list_of_states_and_transitions.append([succ_states, original_mdp.list_of_states_and_transitions[s][1]])
 
-
         if end_type == 'cut':
             for s in range(original_mdp.NS):
                 #Connect the states themselves at the end
