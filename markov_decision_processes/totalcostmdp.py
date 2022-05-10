@@ -55,7 +55,7 @@ class TotalCostMDP:
         #print(x_sa.value)
         return x_sa.value, x_s_inflow.value
 
-    def maximize_reward_with_concave_regularizer(mdp: MDP, end_states, regularizer: str, reg_constant: float, initial_state_dist=None, final_state_dist=None):
+    def maximize_reward_with_concave_regularizer(mdp: MDP, end_states, regularizer: str, reg_constant: float, initial_state_dist=None, final_state_dist=None, reward_list=None):
         """
         Computes the policy that collects maximum average reward subject to regularization.
         This implementation assumes that every strongly connected component is reachable with probability 1.
@@ -68,13 +68,17 @@ class TotalCostMDP:
         :param reg_constant: Regularization constant that multiplies the regularization term.
         :param initial_state_dist: A distribution over initial states.
         :param final_state_dist: A tuple with a support over some states and respective probabilities.
+        :param reward_list: A list with a support over states and corresponding reward values for each action.
         :return: The optimal objective value, the value for the linear reward w/o regularization, the occupancy measures
         """
         #TODO add KL and Fisher
 
         ##Check the validity of the list of rewards
         #assert mdp.is_reward_function_valid(reward)
-        reward = mdp.reward
+        if reward_list is not None:
+            reward = reward_list
+        else:
+            reward = mdp.reward
 
         reward_vec = TotalCostMDP.state_list_to_stateaction_vec(mdp, reward)
 
@@ -124,8 +128,8 @@ class TotalCostMDP:
         prob = cp.Problem(obj, constraints)
 
         prob.solve()
-        print("\nThe optimal value is", prob.value)
-        print("The reward_function is ", x_sa.value @ reward_vec)
+        #print("\nThe optimal value is", prob.value)
+        print("The total reward is ", x_sa.value @ reward_vec)
         #print("A solution x is")
         #print(x_sa.value)
         return prob.value, x_sa.value @ reward_vec,  x_sa.value
@@ -219,5 +223,3 @@ class TotalCostMDP:
             var_vec[sa_ind:(sa_ind + mdp.NA_list[0, state_index]), 0] = var_list[state_index]
             sa_ind += mdp.NA_list[0, state_index]
         return var_vec
-
-    #def create_rewards_for_deception(mdp: MDP, occupancies: list):
