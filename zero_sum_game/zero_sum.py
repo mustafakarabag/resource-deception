@@ -33,6 +33,6 @@ class ZeroSumGame:
         prob = cp.Problem(obj, constraints)
 
         prob.solve()
-        print("\nThe optimal value is", prob.value)
+        print("\nThe security level is ", prob.value)
 
         return prob.value, security_level.value, strategy_distribution.value

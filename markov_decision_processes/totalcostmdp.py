@@ -165,11 +165,9 @@ class TotalCostMDP:
                         x_s_inflow[succ_state] = outflows[0, succ_state_index]
                     else:
                         x_s_inflow[succ_state] = cp.atoms.affine.add_expr.AddExpression([x_s_inflow[succ_state], outflows[0, succ_state_index]])
-                sa_ind += mdp.NA_list[0, state_index]
-
                 #Add initial flows
                 x_s_inflow[state_index] = x_s_inflow[state_index] + initial_state_dist[state_index]
-
+            sa_ind += mdp.NA_list[0, state_index]
         # Define the occupancy measure constraints
         occupancy_constraints = []
 
@@ -221,3 +219,5 @@ class TotalCostMDP:
             var_vec[sa_ind:(sa_ind + mdp.NA_list[0, state_index]), 0] = var_list[state_index]
             sa_ind += mdp.NA_list[0, state_index]
         return var_vec
+
+    #def create_rewards_for_deception(mdp: MDP, occupancies: list):
