@@ -1,10 +1,10 @@
 import os
 import pickle
-
 import matplotlib.pyplot as plt
 import numpy as np
 
-load_file_str = os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'logs', 'time_product_mdp_results', '3stepcontinueMDP.pkl')
+load_file_str = os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'logs', 'deception_results', '3stepcontinueMDP.pkl')
+print(load_file_str)
 with open(load_file_str, 'rb') as f:
     load_dict = pickle.load(f)
     time_product_mdp = load_dict['time_product_mdp']
@@ -25,6 +25,8 @@ x_s_ind = 0
 for t in range(T_vis):
     occ_vars = x_s[x_s_ind:(x_s_ind + time_product_mdp.original_mdp.NS)]
     occ_vars = np.reshape(occ_vars, (num_of_rows, num_of_cols))
-    plt.imshow(occ_vars, cmap='hot', interpolation='nearest')
+    print(occ_vars)
+    shw = plt.imshow(occ_vars, cmap=plt.cm.Reds, interpolation='nearest')
+    plt.colorbar(shw)
     plt.show()
     x_s_ind = x_s_ind + time_product_mdp.original_mdp.NS
