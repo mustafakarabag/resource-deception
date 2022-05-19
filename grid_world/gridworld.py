@@ -8,7 +8,8 @@ class GridWorld(MDP):
                  init_state_dist: int,
                  obstacle_locations: list,
                  slip_probability=0,
-                 reward_constant = 0):
+                 reward_constant = 0,
+                 end_states = None):
         """
 
         @param num_of_rows: Number of rows of the grid
@@ -61,7 +62,7 @@ class GridWorld(MDP):
 
                     #If there is no slip state, add slip to the main target state
                     if len(slip_locs) == 0:
-                        tran_probs[act_ind, successor_locs.index(next_loc)] = 1
+                        tran_probs[act_ind, self.find_unique_array_in_a_list(next_loc, successor_locs)] = 1
                     valid_acts.append(act_list[act_ind])
                 else:
                     act_validity[act_ind] = False
@@ -81,15 +82,17 @@ class GridWorld(MDP):
                 tran_probs = np.eye(1)
                 self.available_actions[-1] = ['Loop']
 
+            if state in end_states:
+                successor_locs = [loc]
+                tran_probs = np.eye(1)
+                self.available_actions[-1] = ['Loop']
+
             #Find the state indices of the successor state locations
             succ_states = np.ravel_multi_index(np.transpose(np.array(successor_locs)), (self.Nrows, self.Ncols))
             self.list_of_states_and_transitions.append([np.array([succ_states]), tran_probs])
 
         # Initialize as an MDP to make sure the construction is correct
         super().__init__(self.list_of_states_and_transitions, self.init_state_dist, self.construct_uniform_rewards(reward_constant))
-
-
-
 
     def is_out_of_bounds(self, loc:np.ndarray) -> bool:
         """
