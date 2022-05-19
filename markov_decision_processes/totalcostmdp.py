@@ -86,7 +86,7 @@ class TotalCostMDP:
             initial_state_dist = mdp.initial_state_dist
 
         #Tolerance
-        tol = 1e-7
+        tol = 1e-4
 
         #Occupancy measure
         x_sa = cp.Variable((1, mdp.NSA))
@@ -103,7 +103,7 @@ class TotalCostMDP:
         if final_state_dist is not None:
             (target_states, target_probabilities) = final_state_dist
             for i in range(len(target_states)):
-                final_state_constraints.append(x_s_inflow[target_states[i]] == target_probabilities[i])
+                final_state_constraints.append(x_s_inflow[target_states[i]] >= target_probabilities[i] - 1e-3)
             constraints.extend(final_state_constraints)
 
         linear_reward_func = x_sa @ reward_vec
