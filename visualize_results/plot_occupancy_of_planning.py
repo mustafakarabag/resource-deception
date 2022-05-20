@@ -49,8 +49,8 @@ for t in range(T_vis):
     shw.cmap.set_under('green')
 
     #plt.imshow(obstacle_matrix)
-    plt.colorbar(shw)
-    plt.show()
+    #plt.colorbar(shw)
+    #plt.show()
     x_s_ind = x_s_ind + time_product_mdp.original_mdp.NS
     total_occupancy += occ_vars
 

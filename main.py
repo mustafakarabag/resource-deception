@@ -6,6 +6,7 @@ from markov_decision_processes.totalcostmdp import TotalCostMDP
 from markov_decision_processes.timeproductmdp import TimeProductMDP
 from grid_world.gridworld import GridWorld
 from zero_sum_game.zero_sum import ZeroSumGame
+from deception_methods.deceptionmethods import DeceptionMethods
 import numpy as np
 
 import pickle
@@ -22,7 +23,7 @@ def mymain():
                  np.array([7,3]), np.array([7,4]), np.array([7,5])]
     slip_probability = 0
     time_horizon = 8
-    init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[0] = 1 #; init_state_dist[9] = 0.5
+    init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[3] = 1 ; #init_state_dist[9] =0.5
     reward_constant = -10
     end_states = [num_of_states-num_of_cols, num_of_states-num_of_cols + 4, num_of_states-1]
     regularization_constant = 4
@@ -61,9 +62,9 @@ def mymain():
         final_distribution = [end_states, np.round(strategy[0,:],3)]
         adversary_distribution = [end_states, np.round(adversary_strategy[:,0],3)]
         if matrix_index == 0:
-            final_distribution = [end_states, np.array([0.5, 0.5, 0])]
+            final_distribution = [end_states, np.array([1, 0, 0])]
         else:
-            final_distribution = [end_states, np.array([0, 0.5, 0.5])]
+            final_distribution = [end_states, np.array([0, 0, 1])]
         print("Final distribution is: " + str(final_distribution))
         print("Adversary distribution is: " + str(adversary_distribution))
         val, _,  x_sa = TotalCostMDP.maximize_reward_with_concave_regularizer(my_grid_world, end_states,
@@ -110,7 +111,7 @@ def mymain():
     print(product_end_states)
     _, _, strategy = ZeroSumGame.compute_equilibrium(utility_matrices[true_matrix_index])
     product_final_distribution = [product_end_states, np.round(strategy[0,:],3)]
-    product_final_distribution = [product_end_states, np.array([0.5,0.5,0])]
+    product_final_distribution = [product_end_states, np.array([1,0,0])]
 
 
     reward_list_transient = []
@@ -125,17 +126,21 @@ def mymain():
     reward_list = reward_list_transient * time_horizon + reward_list_steady_state
 
     # Compute deceptive policy for exaggeration behavior
-    val, _,  x_sa_2 = TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, product_end_states,
-                                                                            'none', regularization_constant,
-                                                                            time_product_grid_world.initial_state_dist,
-                                                                            product_final_distribution,
-                                                                            reward_list)
+    #val, _,  x_sa_2 = TotalCostMDP.maximize_reward_with_concave_regularizer(time_product_grid_world, product_end_states,
+    #                                                                        'none', regularization_constant,
+    #                                                                        time_product_grid_world.initial_state_dist,
+    #                                                                        product_final_distribution,
+    #                                                                        reward_list)
+
+    val, x_sa, max_index = DeceptionMethods.exaggration(time_product_grid_world,expected_policies,true_matrix_index,product_end_states,0.1,product_final_distribution)
+
+    #val, x_sa = DeceptionMethods.ambiguity(time_product_grid_world,expected_policies,true_matrix_index,product_end_states,0.1,product_final_distribution)
 
     save_file_str = os.path.join(os.path.abspath(os.path.curdir), 'logs', 'deception_results', '3stepcontinueMDP.pkl')
     with open(save_file_str, 'wb') as f:
         save_dict = {}
         save_dict['time_product_mdp'] = time_product_grid_world
-        save_dict['x_sa'] = x_sa_2
+        save_dict['x_sa'] = x_sa
         save_dict['obstacles'] = obstacles
         save_dict['end_states'] = end_states
         pickle.dump(save_dict, f)

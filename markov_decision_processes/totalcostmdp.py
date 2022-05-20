@@ -106,7 +106,7 @@ class TotalCostMDP:
                 final_state_constraints.append(x_s_inflow[target_states[i]] >= target_probabilities[i] - 1e-3)
             constraints.extend(final_state_constraints)
 
-        linear_reward_func = x_sa @ reward_vec
+
         reg_func = 0.0
         if(regularizer == 'entropy'):
             sa_ind = 0
@@ -119,7 +119,7 @@ class TotalCostMDP:
             print('No regularizer')
         else:
             print('Unrecognized regularizer ignoring it')
-
+        linear_reward_func = x_sa @ reward_vec
         func = linear_reward_func + reg_func
         obj = cp.Maximize(func)
 
@@ -134,6 +134,85 @@ class TotalCostMDP:
         #print(x_sa.value)
         return prob.value, x_sa.value @ reward_vec,  x_sa.value
 
+
+    def create_entropy_objective(mdp: MDP, x_sa, states_to_be_included):
+        func = 0.0
+        sa_ind = 0
+        for state_index in range(mdp.NS):
+            x_sa_current_state = x_sa[:, sa_ind:(sa_ind + mdp.NA_list[0, state_index])]
+            reg_term_state = -cp.sum(
+                cp.rel_entr(x_sa_current_state, cp.sum(x_sa_current_state) * np.ones(x_sa_current_state.shape)))
+            func += func * reg_term_state
+            sa_ind += mdp.NA_list[0, state_index]
+        return func
+
+    def create_linear_objective(mdp:MDP, x_sa, reward_list=None):
+        if reward_list is not None:
+            reward = reward_list
+        else:
+            reward = mdp.reward
+
+        reward_vec = TotalCostMDP.state_list_to_stateaction_vec(mdp, reward)
+        return x_sa @ reward_vec
+
+    def create_kl_objective(mdp:MDP, x_sa, other_policy, states_to_be_included):
+        func = 0.0
+        sa_ind = 0
+        eps = 1e-5
+        for state_index in states_to_be_included:
+            x_sa_current_state = x_sa[:, sa_ind:(sa_ind + mdp.NA_list[0, state_index])]
+            reg_term_state = cp.sum(
+                cp.rel_entr(x_sa_current_state, cp.sum(x_sa_current_state) * (np.reshape(other_policy[state_index], x_sa_current_state.shape) + eps)))
+            func += reg_term_state
+            sa_ind += mdp.NA_list[0, state_index]
+        return func
+
+    def maximize_given_objective(mdp: MDP, x_sa_cvx, obj_func, extra_constraints, end_states, initial_state_dist=None, final_state_dist=None):
+        """
+        Computes the policy that collects maximum average reward subject to regularization.
+        This implementation assumes that every strongly connected component is reachable with probability 1.
+        To compute maximum reward policy, set regularizer to 'none'.
+
+        :param mdp: A discrete time, discrete state MDP.
+        :param end_states: A list of end states.
+        :param initial_state_dist: A distribution over initial states.
+        :param final_state_dist: A tuple with a support over some states and respective probabilities.
+        :param reward_list: A list with a support over states and corresponding reward values for each action.
+        :return: The optimal objective value, the value for the linear reward w/o regularization, the occupancy measures
+        """
+        if initial_state_dist is None:
+            initial_state_dist = mdp.initial_state_dist
+
+        #Tolerance
+        tol = 1e-4
+
+        x_sa = x_sa_cvx
+
+        #Occupancy constraints that an average MDP obeys
+        occupancy_constraints, x_s_inflow = TotalCostMDP._create_flow_equations_zero_unreachable(mdp, x_sa, end_states, initial_state_dist)
+
+        #Problem constraints
+        constraints = []
+        constraints.extend(occupancy_constraints)
+
+        final_state_constraints = []
+        #Final state constraints
+        if final_state_dist is not None:
+            (target_states, target_probabilities) = final_state_dist
+            for i in range(len(target_states)):
+                final_state_constraints.append(x_s_inflow[target_states[i]] >= target_probabilities[i] - 1e-3)
+            constraints.extend(final_state_constraints)
+
+        constraints.extend(extra_constraints)
+
+        obj = cp.Maximize(obj_func)
+
+
+        # Create the problem
+        prob = cp.Problem(obj, constraints)
+
+        prob.solve(verbose=True, max_iters=500)
+        return prob.value,  x_sa.value
 
 
     def _create_flow_equations(mdp: MDP, x_sa, end_states, initial_state_dist=None):
