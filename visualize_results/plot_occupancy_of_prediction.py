@@ -2,6 +2,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 #from tikzplotlib import save as tikz_save
 
 load_file_str = os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'logs', 'prediction_1_results', '3stepcontinueMDP.pkl')
@@ -40,6 +41,10 @@ occ_vars = np.reshape(occ_vars, (num_of_rows, num_of_cols))
 occ_vars[obstacle_matrix == 1] = -np.inf
 occ_vars[target_matrix == 1] = -10
 occ_vars = np.flip(occ_vars, 0)
+
+df1 = pd.DataFrame(occ_vars)
+df1.reset_index(drop=True, inplace=True)
+df1.to_csv('sample.csv', index = False, header = None)
 
 print(occ_vars)
 current_cmap = plt.cm.Reds
