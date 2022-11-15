@@ -22,11 +22,11 @@ def mymain():
                  np.array([6,3]), np.array([6,4]), np.array([6,5]),
                  np.array([7,3]), np.array([7,4]), np.array([7,5])]
     slip_probability = 0
-    time_horizon = 8
-    init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[3] = 1 ; #init_state_dist[9] =0.5
+    time_horizon = 5
+    init_state_dist = np.asarray([0.0]*num_of_states); init_state_dist[2] = 1 ; #init_state_dist[9] =0.5
     reward_constant = -10
     end_states = [num_of_states-num_of_cols, num_of_states-num_of_cols + 4, num_of_states-1]
-    regularization_constant = 4
+    regularization_constant = 6
     num_of_utility_matrices = 2
     true_matrix_index = 0 # True utility matrix is the first utility matrix
     utility_matrices = []
@@ -62,9 +62,9 @@ def mymain():
         final_distribution = [end_states, np.round(strategy[0,:],3)]
         adversary_distribution = [end_states, np.round(adversary_strategy[:,0],3)]
         if matrix_index == 0:
-            final_distribution = [end_states, np.array([1, 0, 0])]
+            final_distribution = [end_states, np.array([0.5, 0.5, 0])]
         else:
-            final_distribution = [end_states, np.array([0, 0, 1])]
+            final_distribution = [end_states, np.array([0, 0.5, 0.5])]
         print("Final distribution is: " + str(final_distribution))
         print("Adversary distribution is: " + str(adversary_distribution))
         val, _,  x_sa = TotalCostMDP.maximize_reward_with_concave_regularizer(my_grid_world, end_states,
@@ -111,7 +111,7 @@ def mymain():
     print(product_end_states)
     _, _, strategy = ZeroSumGame.compute_equilibrium(utility_matrices[true_matrix_index])
     product_final_distribution = [product_end_states, np.round(strategy[0,:],3)]
-    product_final_distribution = [product_end_states, np.array([1,0,0])]
+    product_final_distribution = [product_end_states, np.array([0.5,0.5,0])]
 
 
     reward_list_transient = []

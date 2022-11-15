@@ -2,6 +2,7 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 load_file_str = os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'logs', 'deception_results', '3stepcontinueMDP.pkl')
 print(load_file_str)
@@ -37,9 +38,9 @@ print(obstacle_matrix)
 x_s_ind = 0
 total_occupancy = np.zeros((num_of_rows, num_of_cols))
 for t in range(T_vis):
-    occ_vars = x_s[x_s_ind:(x_s_ind + time_product_mdp.original_mdp.NS)]
+    occ_vars = np.round(x_s[x_s_ind:(x_s_ind + time_product_mdp.original_mdp.NS)],3)
     occ_vars = np.reshape(occ_vars, (num_of_rows, num_of_cols))
-    occ_vars[obstacle_matrix == 1] = None
+    occ_vars[obstacle_matrix == 1] = -100
     occ_vars[target_matrix == 1] = -10
     occ_vars = np.flip(occ_vars, 0)
 
@@ -54,7 +55,9 @@ for t in range(T_vis):
     x_s_ind = x_s_ind + time_product_mdp.original_mdp.NS
     total_occupancy += occ_vars
 
-
+df1 = pd.DataFrame(total_occupancy)
+df1.reset_index(drop=True, inplace=True)
+df1.to_csv('sample.csv', index = False, header = None)
 current_cmap = plt.cm.Reds
 current_cmap.set_bad(color='orange')
 shw = plt.imshow(total_occupancy, cmap=current_cmap, interpolation='nearest', vmin = -0.05)
